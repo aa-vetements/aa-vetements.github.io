@@ -198,7 +198,8 @@
   .sheet.show{display:flex;animation:up .22s ease;}
   @keyframes up{from{transform:translateY(24px);opacity:0;}to{transform:none;opacity:1;}}
   .sh-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(250,246,243,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-  .sh-close{width:40px;height:40px;border-radius:50%;border:none;background:var(--card);box-shadow:0 1px 6px rgba(0,0,0,.12);font-size:18px;color:var(--ink);cursor:pointer;flex-shrink:0;}
+  .sh-close{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 16px 0 18px;border-radius:999px;border:none;background:var(--ink);color:#fff;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;box-shadow:0 4px 12px rgba(43,26,36,.25);}
+  .sh-close:active{transform:scale(.96);}
   .sh-title{font-weight:800;font-size:16px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .sh-main{position:relative;margin:0 14px;border-radius:22px;overflow:hidden;background:#f1e7e3;aspect-ratio:4/5;max-height:62vh;}
   .sh-main img{width:100%;height:100%;object-fit:contain;display:block;}
@@ -263,7 +264,7 @@
 <footer>© كلش 100 ألف — السلعة والأسعار تتحدّث وحدها حسب المخزون</footer>
 
 <div class="sheet" id="sheet">
-  <div class="sh-top"><button class="sh-close" id="sh-close" aria-label="رجوع">→</button><div class="sh-title" id="sh-title"></div></div>
+  <div class="sh-top"><button class="sh-close" id="sh-close" aria-label="رجوع"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>رجوع</button><div class="sh-title" id="sh-title"></div></div>
   <div class="sh-main"><img id="sh-img" alt=""></div>
   <div class="sh-body">
     <div class="sh-color" id="sh-color"></div>
