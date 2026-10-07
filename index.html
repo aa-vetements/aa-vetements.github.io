@@ -26,8 +26,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<link rel="preload" href="catalog.json" as="fetch" crossorigin>
 <style>
   :root{
     --ink:#2b1a24;
@@ -291,8 +290,6 @@ const firebaseConfig = {
   messagingSenderId: "329571073759",
   appId: "1:329571073759:web:ceb6d31bdef660dd25336a"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
 const COPY_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
 let allItems = [], catOrder = [], activeCat = 'ALL', searchTerm = '';
@@ -328,6 +325,15 @@ function inStockModels(products){
     });
   });
   return out;
+}
+
+function fromCatalog(models){
+  return models.map(m=>{
+    const pieces = m.pieces.map(x=>({...x, img:x.t, full:x.f}));
+    const prices = pieces.map(x=>x.price);
+    return {...m, pieces, minPrice:Math.min(...prices), maxPrice:Math.max(...prices),
+      search:(m.name+' '+m.cat+' '+pieces.map(x=>x.color+' '+x.code).join(' ')).toLowerCase()};
+  });
 }
 
 function categories(){
@@ -395,7 +401,7 @@ function renderGrid(){
     img.onload = ()=> thumb.classList.add('loaded');
     img.src = cover.img;
     card.onclick = ()=> openModel(m);
-    card.querySelector('.copy').onclick = e=>{ e.stopPropagation(); copyImage({img:cover.img, name:m.name + ' ' + cover.color}); };
+    card.querySelector('.copy').onclick = e=>{ e.stopPropagation(); copyImage({img:cover.full||cover.img, name:m.name + ' ' + cover.color}); };
     grid.appendChild(card);
   });
 }
@@ -403,13 +409,13 @@ function renderGrid(){
 let curModel = null;
 function showPiece(idx){
   const m = curModel, x = m.pieces[idx];
-  $('sh-img').src = x.img;
+  $('sh-img').src = x.full||x.img;
   $('sh-color').innerHTML = m.pieces.length > 1 ? 'اللون: <b>' + esc(x.color) + '</b>' : '';
   $('sh-price').innerHTML = '<bdi dir="ltr">' + money(x.price) + '</bdi><small>دج</small>';
   [...$('sh-thumbs').children].forEach((el,k)=> el.classList.toggle('on', k===idx));
   $('sh-copy').innerHTML = COPY_ICON + ' نسخ صورة هذا اللون';
   if(m.pieces.length === 1) $('sh-copy').innerHTML = COPY_ICON + ' نسخ الصورة';
-  $('sh-copy').onclick = ()=> copyImage({img:x.img, name:m.name + ' ' + x.color});
+  $('sh-copy').onclick = ()=> copyImage({img:x.full||x.img, name:m.name + ' ' + x.color});
 }
 function openModel(m){
   curModel = m;
@@ -465,7 +471,7 @@ function toPng(blob){
 function downloadImage(x){
   const a = document.createElement('a');
   a.href = x.img;
-  a.download = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu,'_') + '.jpg';
+  a.download = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu,'_') + (String(x.img).includes('.webp') ? '.webp' : '.jpg');
   document.body.appendChild(a); a.click(); a.remove();
   toast('تحمّلت الصورة ✅ زيديها في المسنجر من الصور');
 }
@@ -473,23 +479,36 @@ function downloadImage(x){
 $('search').addEventListener('input', e=>{ searchTerm = e.target.value; renderGrid(); });
 window.addEventListener('scroll', ()=> $('bar').classList.toggle('scrolled', window.scrollY > 120), {passive:true});
 
-// Logo et ordre des catégories depuis Atelier Stock
-db.collection('meta').doc('settings').get().then(d=>{
-  const url = d.exists && d.data().logoUrl;
-  if(url){ const l = $('logo'); l.style.backgroundImage = 'url("' + url + '")'; l.textContent = ''; }
-}).catch(()=>{});
-db.collection('meta').doc('categories').get().then(d=>{
-  if(d.exists && Array.isArray(d.data().list)){ catOrder = d.data().list; renderChips(); renderGrid(); }
-}).catch(()=>{});
-
-$('grid').innerHTML = '<div class="empty">جاري تحميل السلعة…</div>';
-db.collection('products').onSnapshot(snap=>{
-  allItems = inStockModels(snap.docs.map(d=> d.data()));
+function setLogo(url){ if(!url) return; const l = $('logo'); l.style.backgroundImage = 'url("' + url + '")'; l.textContent = ''; }
+function show(items){
+  allItems = items;
   if(activeCat !== 'ALL' && !allItems.some(x=> x.cat === activeCat)) activeCat = 'ALL';
   renderChips(); renderGrid();
-}, ()=>{
-  $('grid').innerHTML = '<div class="empty">ما قدرناش نحمّلو السلعة، تأكدي من الأنترنت وعاودي</div>';
-});
+}
+
+// 1) Catalogue léger (mis à jour toutes les 5 min depuis Atelier Stock) : affichage immédiat
+// 2) Secours : lecture directe de Firestore si le catalogue léger n'existe pas encore
+function loadScript(src){ return new Promise((ok, ko)=>{ const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ko; document.head.appendChild(s); }); }
+async function liveFallback(){
+  try{
+    await loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js');
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    db.collection('meta').doc('settings').get().then(d=> setLogo(d.exists && d.data().logoUrl)).catch(()=>{});
+    db.collection('meta').doc('categories').get().then(d=>{
+      if(d.exists && Array.isArray(d.data().list)){ catOrder = d.data().list; renderChips(); renderGrid(); }
+    }).catch(()=>{});
+    db.collection('products').onSnapshot(snap=> show(inStockModels(snap.docs.map(d=> d.data()))), fail);
+  }catch(e){ fail(); }
+}
+function fail(){ $('grid').innerHTML = '<div class="empty">ما قدرناش نحمّلو السلعة، تأكدي من الأنترنت وعاودي</div>'; }
+
+$('grid').innerHTML = '<div class="empty">جاري تحميل السلعة…</div>';
+fetch('catalog.json', {cache:'no-cache'})
+  .then(r=> r.ok ? r.json() : Promise.reject())
+  .then(c=>{ catOrder = c.cats || []; setLogo(c.logo); show(fromCatalog(c.models || [])); })
+  .catch(liveFallback);
 </script>
 </body>
 </html>
