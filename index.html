@@ -187,14 +187,36 @@
   footer{text-align:center;padding:0 16px 34px;font-size:12.5px;color:var(--muted);}
 
   /* ---------- Visionneuse ---------- */
-  .lightbox{position:fixed;inset:0;z-index:100;background:rgba(24,13,19,.95);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
-  .lightbox.show{display:flex;}
-  .lightbox img{max-width:100%;max-height:68vh;object-fit:contain;border-radius:16px;}
-  .lb-close{position:absolute;top:16px;left:16px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;border:none;font-size:20px;cursor:pointer;}
-  .lb-info{margin-top:16px;text-align:center;color:#fff;width:100%;max-width:360px;}
-  .lb-info .name{color:#fff;min-height:0;-webkit-line-clamp:3;}
-  .lb-info .price{color:#f1d9a8;margin:6px 0 14px;}
-  .lb-info .btn{background:#fff;color:var(--ink);}
+  /* ---------- Pastilles de couleurs sur la carte ---------- */
+  .colors-badge{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.94);color:var(--ink);font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  .swatches{display:flex;gap:5px;margin:8px 0 2px;align-items:center;}
+  .sw{width:24px;height:24px;border-radius:50%;background:#eee center/cover;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);flex-shrink:0;}
+  .sw-more{font-size:11.5px;font-weight:700;color:var(--muted);margin-inline-start:2px;}
+
+  /* ---------- Fiche modèle (toutes les couleurs) ---------- */
+  .sheet{position:fixed;inset:0;z-index:100;background:var(--paper);display:none;flex-direction:column;overflow-y:auto;}
+  .sheet.show{display:flex;animation:up .22s ease;}
+  @keyframes up{from{transform:translateY(24px);opacity:0;}to{transform:none;opacity:1;}}
+  .sh-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(250,246,243,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .sh-close{width:40px;height:40px;border-radius:50%;border:none;background:var(--card);box-shadow:0 1px 6px rgba(0,0,0,.12);font-size:18px;color:var(--ink);cursor:pointer;flex-shrink:0;}
+  .sh-title{font-weight:800;font-size:16px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sh-main{position:relative;margin:0 14px;border-radius:22px;overflow:hidden;background:#f1e7e3;aspect-ratio:4/5;max-height:62vh;}
+  .sh-main img{width:100%;height:100%;object-fit:contain;display:block;}
+  .sh-body{padding:14px 16px 28px;max-width:640px;width:100%;margin:0 auto;}
+  .sh-color{font-size:14px;color:var(--muted);font-weight:600;}
+  .sh-color b{color:var(--ink);}
+  .sh-price{font-size:24px;font-weight:800;margin:2px 0 12px;}
+  .sh-price small{font-size:13px;color:var(--muted);margin-inline-start:4px;}
+  .sh-label{font-size:13.5px;font-weight:700;margin-bottom:8px;}
+  .sh-thumbs{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px;margin-bottom:16px;}
+  .sh-thumbs::-webkit-scrollbar{display:none;}
+  .th{flex-shrink:0;width:68px;cursor:pointer;text-align:center;}
+  .th img{width:68px;height:84px;object-fit:cover;border-radius:12px;border:2.5px solid transparent;display:block;}
+  .th.on img{border-color:var(--ink);}
+  .th span{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .th.on span{color:var(--ink);}
+  .sh-body .btn{height:48px;font-size:15px;border-radius:14px;}
+  .sh-note{font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px;}
 
   .toast{
     position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -221,7 +243,7 @@
   <div class="wrap">
     <div class="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="search" type="search" placeholder="ابحثي على موديل، لون، ولا كود…">
+      <input id="search" type="search" placeholder="ابحثي على موديل ولا لون…">
     </div>
   </div>
   <div class="chips" id="chips"></div>
@@ -233,20 +255,23 @@
 <section class="how">
   <div class="how-box">
     <h2>كيفاش تطلبي؟</h2>
-    <div class="step"><span class="num">1</span><span>اختاري الموديل اللي عجبك واضغطي <b>«نسخ الصورة»</b>.</span></div>
+    <div class="step"><span class="num">1</span><span>افتحي الموديل اللي عجبك، اختاري <b>اللون</b> واضغطي <b>«نسخ الصورة»</b>.</span></div>
     <div class="step"><span class="num">2</span><span>ابعثي الصورة لصفحتنا في <b>المسنجر</b> مع المقاس والولاية.</span></div>
     <div class="step"><span class="num">3</span><span>نأكدو معاك الطلبية، وتخلصي <b>كي توصلك</b> السلعة.</span></div>
   </div>
 </section>
 <footer>© كلش 100 ألف — السلعة والأسعار تتحدّث وحدها حسب المخزون</footer>
 
-<div class="lightbox" id="lightbox">
-  <button class="lb-close" id="lb-close" aria-label="إغلاق">✕</button>
-  <img id="lb-img" src="" alt="">
-  <div class="lb-info">
-    <div class="name" id="lb-name"></div>
-    <div class="price" id="lb-price"></div>
-    <button class="btn" id="lb-copy">نسخ الصورة</button>
+<div class="sheet" id="sheet">
+  <div class="sh-top"><button class="sh-close" id="sh-close" aria-label="رجوع">→</button><div class="sh-title" id="sh-title"></div></div>
+  <div class="sh-main"><img id="sh-img" alt=""></div>
+  <div class="sh-body">
+    <div class="sh-color" id="sh-color"></div>
+    <div class="sh-price" id="sh-price"></div>
+    <div class="sh-label" id="sh-label"></div>
+    <div class="sh-thumbs" id="sh-thumbs"></div>
+    <button class="btn" id="sh-copy"></button>
+    <div class="sh-note">انسخي صورة اللون اللي عجبك وابعثيها لينا في المسنجر 💌</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -275,23 +300,25 @@ function toast(msg){
   clearTimeout(toast._tm); toast._tm = setTimeout(()=> t.classList.remove('show'), 2600);
 }
 
-// Une carte par pièce EN STOCK : la photo de vitrine + chaque couleur (qty > 0)
-function inStockPieces(products){
+// Un modèle = un produit d'Atelier Stock ; ses pièces EN STOCK (vitrine + couleurs, qty > 0)
+function inStockModels(products){
   const out = [];
   products.sort((a,b)=>(a.order||0)-(b.order||0)).forEach(p=>{
-    const pieces = [{img:p.img, qty:p.qty, price:p.price, code:p.code, colorName:p.colorName}];
+    const raw = [{img:p.img, qty:p.qty, price:p.price, code:p.code, color:p.colorName||''}];
     (p.colors||[]).forEach((c,i)=>{
       if(!c) return;
-      pieces.push({img:c.img, qty:c.qty, price:(c.price!=null && c.price!=='') ? c.price : p.price,
-        code:c.code || (p.id+'-'+(i+1)), colorName:c.name||''});
+      raw.push({img:c.img, qty:c.qty, price:(c.price!=null && c.price!=='') ? c.price : p.price,
+        code:c.code || (p.id+'-'+(i+1)), color:c.name||''});
     });
-    pieces.forEach((pc,i)=>{
-      if(!pc.img || (Number(pc.qty)||0) <= 0) return;
-      out.push({
-        cat:p.cat||'', order:(p.order||0)*100 + i,
-        name: pc.colorName ? (p.name + ' — ' + pc.colorName) : (p.name||''),
-        img:pc.img, qty:Number(pc.qty)||0, price:pc.price, code:String(pc.code||'')
-      });
+    const pieces = raw.filter(pc=> pc.img && (Number(pc.qty)||0) > 0)
+      .map((pc,i)=>({...pc, qty:Number(pc.qty)||0, price:Number(pc.price)||0, code:String(pc.code||''),
+        color: pc.color || ('لون ' + (i+1))}));
+    if(!pieces.length) return;
+    const prices = pieces.map(x=>x.price);
+    out.push({
+      id:p.id, cat:p.cat||'', order:p.order||0, name:p.name||'', pieces,
+      minPrice:Math.min(...prices), maxPrice:Math.max(...prices),
+      search:(p.name+' '+(p.cat||'')+' '+pieces.map(x=>x.color+' '+x.code).join(' ')).toLowerCase()
     });
   });
   return out;
@@ -320,11 +347,14 @@ function renderChips(){
   categories().forEach(c=> mk(c, c, allItems.filter(x=>x.cat===c).length));
 }
 
+const priceHtml = m => (m.minPrice !== m.maxPrice ? '<small style="margin:0 0 0 4px">من</small>' : '')
+  + '<bdi dir="ltr">' + money(m.minPrice) + '</bdi><small>دج</small>';
+
 function renderGrid(){
   let list = allItems.slice();
   if(activeCat !== 'ALL') list = list.filter(x=> x.cat === activeCat);
   const s = searchTerm.trim().toLowerCase();
-  if(s) list = list.filter(x=> (x.name+' '+x.cat+' '+x.code).toLowerCase().includes(s));
+  if(s) list = list.filter(x=> x.search.includes(s));
   const cats = categories();
   list.sort((a,b)=> (cats.indexOf(a.cat)-cats.indexOf(b.cat)) || (a.order-b.order));
 
@@ -332,44 +362,72 @@ function renderGrid(){
   const grid = $('grid'); grid.innerHTML = '';
   if(!list.length){ grid.innerHTML = '<div class="empty">ما لقينا حتى موديل بهذا البحث</div>'; return; }
 
-  list.forEach((x, i)=>{
+  list.forEach((m, i)=>{
+    const n = m.pieces.length, cover = m.pieces[0];
+    const last = m.pieces.reduce((t,x)=>t+x.qty,0) <= 2;
+    const sw = m.pieces.slice(0,5).map(x=>'<span class="sw" style="background-image:url(\'' + x.img + '\')"></span>').join('')
+      + (n > 5 ? '<span class="sw-more">+' + (n-5) + '</span>' : '');
     const card = document.createElement('article');
     card.className = 'card';
     card.style.animationDelay = Math.min(i, 12) * 25 + 'ms';
     card.innerHTML = `
       <div class="thumb">
-        <img alt="${esc(x.name)}" loading="lazy">
-        ${x.qty <= 2 ? '<span class="tag-last">آخر القطع</span>' : ''}
+        <img alt="${esc(m.name)}" loading="lazy">
+        ${last ? '<span class="tag-last">آخر القطع</span>' : ''}
+        ${n > 1 ? '<span class="colors-badge">' + n + ' ألوان</span>' : ''}
       </div>
       <div class="body">
-        <div class="cat">${esc(x.cat)}</div>
-        <div class="name">${esc(x.name)}</div>
-        <div class="price-row">
-          <div class="price"><bdi dir="ltr">${money(x.price)}</bdi><small>دج</small></div>
-          <div class="code">#${esc(x.code.slice(-4))}</div>
-        </div>
-        <button class="btn">${COPY_ICON} نسخ الصورة</button>
+        <div class="cat">${esc(m.cat)}</div>
+        <div class="name">${esc(m.name)}</div>
+        ${n > 1 ? '<div class="swatches">' + sw + '</div>' : ''}
+        <div class="price-row"><div class="price">${priceHtml(m)}</div></div>
+        <button class="btn">${n > 1 ? 'شوفي الألوان' : 'شوفي الموديل'}</button>
       </div>`;
     const thumb = card.querySelector('.thumb'), img = card.querySelector('img');
     img.onload = ()=> thumb.classList.add('loaded');
-    img.src = x.img;
-    thumb.onclick = ()=> openLightbox(x);
-    card.querySelector('.btn').onclick = ()=> copyImage(x);
+    img.src = cover.img;
+    card.onclick = ()=> openModel(m);
     grid.appendChild(card);
   });
 }
 
-function openLightbox(x){
-  $('lb-img').src = x.img;
-  $('lb-name').textContent = x.name;
-  $('lb-price').innerHTML = '<bdi dir="ltr">' + money(x.price) + '</bdi> <small>دج</small>';
-  $('lb-copy').innerHTML = COPY_ICON + ' نسخ الصورة';
-  $('lb-copy').onclick = ()=> copyImage(x);
-  $('lightbox').classList.add('show');
+let curModel = null;
+function showPiece(idx){
+  const m = curModel, x = m.pieces[idx];
+  $('sh-img').src = x.img;
+  $('sh-color').innerHTML = m.pieces.length > 1 ? 'اللون: <b>' + esc(x.color) + '</b>' : '';
+  $('sh-price').innerHTML = '<bdi dir="ltr">' + money(x.price) + '</bdi><small>دج</small>';
+  [...$('sh-thumbs').children].forEach((el,k)=> el.classList.toggle('on', k===idx));
+  $('sh-copy').innerHTML = COPY_ICON + ' نسخ صورة هذا اللون';
+  if(m.pieces.length === 1) $('sh-copy').innerHTML = COPY_ICON + ' نسخ الصورة';
+  $('sh-copy').onclick = ()=> copyImage({img:x.img, name:m.name + ' ' + x.color});
 }
-const closeLightbox = ()=> $('lightbox').classList.remove('show');
-$('lb-close').onclick = closeLightbox;
-$('lightbox').addEventListener('click', e=>{ if(e.target.id === 'lightbox') closeLightbox(); });
+function openModel(m){
+  curModel = m;
+  $('sh-title').textContent = m.name;
+  const n = m.pieces.length;
+  $('sh-label').textContent = n > 1 ? 'الألوان المتوفرة (' + n + ')' : '';
+  const th = $('sh-thumbs'); th.innerHTML = ''; th.style.display = n > 1 ? 'flex' : 'none';
+  m.pieces.forEach((x,k)=>{
+    const d = document.createElement('div');
+    d.className = 'th';
+    d.innerHTML = '<img src="' + x.img + '" alt=""><span>' + esc(x.color) + '</span>';
+    d.onclick = ()=> showPiece(k);
+    th.appendChild(d);
+  });
+  showPiece(0);
+  $('sheet').scrollTop = 0;
+  $('sheet').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  history.pushState({sheet:1}, '');
+}
+function closeModel(){
+  $('sheet').classList.remove('show');
+  document.body.style.overflow = '';
+}
+// le bouton « retour » du téléphone ferme la fiche au lieu de quitter le catalogue
+$('sh-close').onclick = ()=> history.back();
+window.addEventListener('popstate', closeModel);
 
 async function copyImage(x){
   if(!x.img){ toast('ما كانش صورة لهذا الموديل'); return; }
@@ -417,7 +475,7 @@ db.collection('meta').doc('categories').get().then(d=>{
 
 $('grid').innerHTML = '<div class="empty">جاري تحميل السلعة…</div>';
 db.collection('products').onSnapshot(snap=>{
-  allItems = inStockPieces(snap.docs.map(d=> d.data()));
+  allItems = inStockModels(snap.docs.map(d=> d.data()));
   if(activeCat !== 'ALL' && !allItems.some(x=> x.cat === activeCat)) activeCat = 'ALL';
   renderChips(); renderGrid();
 }, ()=>{
