@@ -163,7 +163,7 @@
   .name{
     font-size:14px;font-weight:600;line-height:1.4;color:var(--ink-2);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-    min-height:39px;
+    min-height:0;
   }
   .price-row{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 10px;}
   .price{display:inline-flex;align-items:baseline;gap:3px;font-size:18px;font-weight:800;color:#b3325f;background:#fbe9ef;padding:3px 11px;border-radius:10px;}
@@ -174,6 +174,8 @@
     background:var(--ink);color:#fff;font-size:13.5px;font-weight:700;
     display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;
   }
+  .actions{margin-top:auto;display:flex;flex-direction:column;gap:7px;}
+  .btn.ghost{background:var(--rose-soft);color:var(--ink);height:34px;font-size:12.5px;}
   .btn:active{transform:scale(.98);opacity:.85;}
   .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);font-size:15px;}
 
@@ -382,12 +384,16 @@ function renderGrid(){
         <div class="name">${esc(m.name)}</div>
         ${n > 1 ? '<div class="swatches">' + sw + '</div>' : ''}
         <div class="price-row"><div class="price">${priceHtml(m)}</div></div>
-        <button class="btn">${n > 1 ? 'شوفي الألوان' : 'شوفي الموديل'}</button>
+        <div class="actions">
+          <button class="btn copy">${COPY_ICON} نسخ الصورة</button>
+          ${n > 1 ? '<button class="btn ghost more" aria-label="الألوان">+' + (n-1) + ' ألوان</button>' : ''}
+        </div>
       </div>`;
     const thumb = card.querySelector('.thumb'), img = card.querySelector('img');
     img.onload = ()=> thumb.classList.add('loaded');
     img.src = cover.img;
     card.onclick = ()=> openModel(m);
+    card.querySelector('.copy').onclick = e=>{ e.stopPropagation(); copyImage({img:cover.img, name:m.name + ' ' + cover.color}); };
     grid.appendChild(card);
   });
 }
