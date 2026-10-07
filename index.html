@@ -10,7 +10,7 @@
 <meta property="og:description" content="شوفي كل السلعة المتوفرة بالأسعار — توصيل لـ 58 ولاية">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
@@ -31,7 +31,7 @@
   html{scroll-behavior:smooth;}
   body{
     background:var(--paper);
-    font-family:'Tajawal',system-ui,sans-serif;
+    font-family:'Cairo',system-ui,sans-serif;
     color:var(--ink);
     -webkit-tap-highlight-color:transparent;
     -webkit-font-smoothing:antialiased;
@@ -62,21 +62,26 @@
     width:100%;height:100%;border-radius:50%;
     background:#fff center/cover no-repeat;
     display:flex;align-items:center;justify-content:center;
-    font-family:'El Messiri',serif;font-weight:700;font-size:34px;color:var(--ink);
+    font-family:'Cairo',sans-serif;font-weight:700;font-size:34px;color:var(--ink);
     border:3px solid var(--ink);
   }
-  .brand-name{font-family:'El Messiri',serif;font-weight:700;font-size:30px;letter-spacing:.3px;}
+  .brand-name{font-family:'Aref Ruqaa',serif;font-weight:700;font-size:38px;line-height:1.3;}
   .brand-sub{margin-top:6px;font-size:14px;color:#e8cfd6;}
   .perks{margin:18px auto 0;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;max-width:520px;}
   .perk{
-    display:inline-flex;align-items:center;gap:6px;
-    background:rgba(255,255,255,.09);
-    border:1px solid rgba(255,255,255,.16);
+    display:inline-flex;align-items:center;gap:8px;
+    background:#fff;
     border-radius:999px;
-    padding:7px 13px;
-    font-size:12.5px;font-weight:500;color:#fbeef2;
+    padding:5px 14px 5px 6px;
+    font-size:13px;font-weight:700;color:var(--ink);
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
   }
-  .perk svg{flex-shrink:0;}
+  .perk .ic{
+    width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .perk.truck .ic{background:linear-gradient(135deg,#ff8a5b,#e8456b);}
+  .perk.cash .ic{background:linear-gradient(135deg,#4cc38a,#16935b);}
 
   /* ---------- Barre sticky : recherche + catégories ---------- */
   .bar{
@@ -160,7 +165,7 @@
   /* ---------- Comment commander ---------- */
   .how{max-width:720px;margin:6px auto 0;padding:0 16px 40px;}
   .how-box{background:var(--card);border-radius:var(--radius);padding:20px 18px;box-shadow:0 1px 2px rgba(43,26,36,.05), 0 6px 18px rgba(43,26,36,.06);}
-  .how h2{font-family:'El Messiri',serif;font-size:20px;margin-bottom:14px;}
+  .how h2{font-family:'Cairo',sans-serif;font-size:20px;margin-bottom:14px;}
   .step{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:14.5px;line-height:1.55;}
   .step:last-child{margin-bottom:0;}
   .step .num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--rose-soft);color:var(--ink);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;}
@@ -192,8 +197,8 @@
   <div class="brand-name">كلش 100 ألف</div>
   <div class="brand-sub">لانجري · بيجامات · روبات — كل السلعة المتوفرة هنا</div>
   <div class="perks">
-    <span class="perk"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>توصيل لـ 58 ولاية</span>
-    <span class="perk"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>الدفع عند الاستلام</span>
+    <span class="perk truck"><span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4h14v12H1z"/><path d="M15 8h4l3 3.5V16h-7z"/><circle cx="5.5" cy="18" r="2.2" fill="#fff"/><circle cx="18.5" cy="18" r="2.2" fill="#fff"/></svg></span>توصيل لـ 58 ولاية</span>
+    <span class="perk cash"><span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6" fill="#fff"/><path d="M6 9.5v5M18 9.5v5"/></svg></span>الدفع عند الاستلام</span>
   </div>
 </section>
 
