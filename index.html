@@ -505,9 +505,78 @@ async function liveFallback(){
 function fail(){ $('grid').innerHTML = '<div class="empty">ما قدرناش نحمّلو السلعة، تأكدي من الأنترنت وعاودي</div>'; }
 
 $('grid').innerHTML = '<div class="empty">جاري تحميل السلعة…</div>';
+// 3) Stock en direct : petit document sans photos publié par Atelier Stock à chaque changement.
+//    On garde les photos compressées du catalogue léger et on applique quantités / prix / noms à jour.
+const FS = 'https://firestore.googleapis.com/v1/projects/aa-inventaire/databases/(default)/documents/';
+const FS_KEY = 'AIzaSyAfMIEi1MynF82Jp1j1J1BFQM5w8182JTo';
+function fsVal(v){
+  if(!v) return null;
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return v.doubleValue;
+  if('booleanValue' in v) return v.booleanValue;
+  if('mapValue' in v){ const o = {}, f = v.mapValue.fields || {}; for(const k in f) o[k] = fsVal(f[k]); return o; }
+  if('arrayValue' in v) return (v.arrayValue.values || []).map(fsVal);
+  return null;
+}
+let staticModels = [], liveImgs = {}, lastLight = '';
+const pieceKey = (m, x) => x.code || (m.id + '-0');
+
+async function productImages(id){
+  // photos d'un produit absent du catalogue léger (nouveau produit / nouvelle couleur)
+  if(liveImgs[id]) return liveImgs[id];
+  const r = await fetch(FS + 'products/' + encodeURIComponent(id) + '?key=' + FS_KEY);
+  if(!r.ok) return {};
+  const f = (await r.json()).fields || {}, p = {}; for(const k in f) p[k] = fsVal(f[k]);
+  const map = {}; map[String(p.code || (id + '-0'))] = p.img;
+  (p.colors || []).forEach((c,i)=>{ if(c) map[String(c.code || (id + '-' + (i+1)))] = c.img; });
+  return (liveImgs[id] = map);
+}
+
+async function applyLight(){
+  let doc;
+  try{
+    const r = await fetch(FS + 'meta/stockLight?key=' + FS_KEY, {cache:'no-store'});
+    if(!r.ok) return;
+    doc = fsVal({mapValue:{fields:(await r.json()).fields || {}}});
+  }catch(e){ return; }
+  if(!doc || !doc.data || doc.data === lastLight) return;
+  lastLight = doc.data;
+  const light = JSON.parse(doc.data);
+  if(Array.isArray(light.cats) && light.cats.length) catOrder = light.cats;
+  const byId = {}; staticModels.forEach(m=> byId[m.id] = m);
+  const models = [];
+  for(const [id, it] of Object.entries(light.items || {})){
+    const inStock = (it.pieces || []).filter(x=> x.q > 0);
+    if(!inStock.length) continue;
+    const sm = byId[id], known = {};
+    if(sm) sm.pieces.forEach(x=> known[pieceKey(sm, x)] = x);
+    let imgs = null;
+    const pieces = [];
+    for(const [i, x] of inStock.entries()){
+      let k = known[x.k];
+      if(!k){
+        if(!imgs){ try{ imgs = await productImages(id); }catch(e){ imgs = {}; } }
+        if(!imgs[x.k]) continue;
+        k = {t: imgs[x.k], f: imgs[x.k]};
+      }
+      pieces.push({t:k.t, f:k.f, code:x.k, qty:x.q, price:x.p, color: x.c || k.color || ('لون ' + (i+1))});
+    }
+    if(pieces.length) models.push({id, cat:it.cat, order:it.o, name:it.n, pieces});
+  }
+  show(fromCatalog(models.sort((a,b)=> a.order - b.order)));
+}
+
 fetch('catalog.json', {cache:'no-cache'})
   .then(r=> r.ok ? r.json() : Promise.reject())
-  .then(c=>{ catOrder = c.cats || []; setLogo(c.logo); show(fromCatalog(c.models || [])); })
+  .then(c=>{
+    catOrder = c.cats || []; setLogo(c.logo);
+    staticModels = c.models || [];
+    show(fromCatalog(staticModels));
+    applyLight();
+    setInterval(applyLight, 30000);
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) applyLight(); });
+  })
   .catch(liveFallback);
 </script>
 </body>
