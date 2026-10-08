@@ -209,7 +209,13 @@
   .sh-close:active{transform:scale(.96);}
   .sh-title{font-weight:800;font-size:16px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .sh-main{position:relative;margin:0 14px;border-radius:22px;overflow:hidden;background:#f1e7e3;aspect-ratio:4/5;max-height:62vh;}
-  .sh-main img{width:100%;height:100%;object-fit:contain;display:block;}
+  .sh-main img{width:100%;height:100%;object-fit:contain;display:block;cursor:zoom-in;}
+  .zoom-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(43,26,36,.72);color:#fff;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px;pointer-events:none;white-space:nowrap;}
+  #zoom{position:fixed;inset:0;z-index:200;background:#111;display:none;touch-action:none;overflow:hidden;}
+  #zoom.show{display:block;}
+  #zoom img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;}
+  #zoom .z-close{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;z-index:2;width:46px;height:46px;border-radius:50%;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:22px;cursor:pointer;}
+  #zoom .z-tip{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);color:#fff;opacity:.75;font-size:13px;white-space:nowrap;pointer-events:none;}
   .sh-body{padding:14px 16px 28px;max-width:640px;width:100%;margin:0 auto;}
   .sh-color{font-size:14px;color:var(--muted);font-weight:600;}
   .sh-color b{color:var(--ink);}
@@ -272,7 +278,7 @@
 
 <div class="sheet" id="sheet">
   <div class="sh-top"><button class="sh-close" id="sh-close" aria-label="رجوع"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>رجوع</button><div class="sh-title" id="sh-title"></div></div>
-  <div class="sh-main"><img id="sh-img" alt=""></div>
+  <div class="sh-main"><img id="sh-img" alt=""><span class="zoom-hint">🔍 اضغطي باش تكبري</span></div>
   <div class="sh-body">
     <div class="sh-color" id="sh-color"></div>
     <div class="sh-price" id="sh-price"></div>
@@ -452,7 +458,71 @@ function closeModel(){
 }
 // le bouton « retour » du téléphone ferme la fiche au lieu de quitter le catalogue
 $('sh-close').onclick = ()=> history.back();
-window.addEventListener('popstate', closeModel);
+window.addEventListener('popstate', ()=>{
+  if($('zoom') && $('zoom').classList.contains('show')){ closeZoom(); return; }   // retour = fermer le zoom d'abord
+  closeModel();
+});
+
+/* ---------- Zoom plein écran : toucher la photo, pincer avec 2 doigts, double-toucher ---------- */
+(function(){
+  const z = document.createElement('div');
+  z.id = 'zoom';
+  z.innerHTML = '<button class="z-close" aria-label="إغلاق">✕</button><img alt=""><div class="z-tip">قربي بصبعين ولا اضغطي مرتين 🔍</div>';
+  document.body.appendChild(z);
+  const img = z.querySelector('img');
+  let sc = 1, tx = 0, ty = 0;
+  const pts = new Map(); let start = null, lastTap = 0, moved = false;
+  const apply = ()=>{ img.style.transform = `translate(${tx}px,${ty}px) scale(${sc})`; };
+  const clamp = ()=>{
+    sc = Math.min(5, Math.max(1, sc));
+    const W = z.clientWidth, H = z.clientHeight;
+    tx = Math.min(0, Math.max(W - W*sc, tx)); ty = Math.min(0, Math.max(H - H*sc, ty));
+    if(sc === 1){ tx = 0; ty = 0; }
+  };
+  const zoomAt = (x, y, ns)=>{ tx = x - (x - tx) * ns / sc; ty = y - (y - ty) * ns / sc; sc = ns; clamp(); apply(); };
+  window.openZoom = src => {
+    img.src = src; sc = 1; tx = 0; ty = 0; apply();
+    z.classList.add('show');
+    history.pushState({zoom:1}, '');
+  };
+  window.closeZoom = ()=> z.classList.remove('show');
+  z.querySelector('.z-close').onclick = e => { e.stopPropagation(); history.back(); };
+  z.addEventListener('pointerdown', e => {
+    z.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, {x:e.clientX, y:e.clientY}); moved = false;
+    const a = [...pts.values()];
+    start = a.length === 2
+      ? {d: Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y), sc, tx, ty, cx:(a[0].x+a[1].x)/2, cy:(a[0].y+a[1].y)/2}
+      : {x:e.clientX, y:e.clientY, tx, ty};
+  });
+  z.addEventListener('pointermove', e => {
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    const a = [...pts.values()];
+    if(a.length === 2 && start && start.d){
+      const d = Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y);
+      const ns = Math.min(5, Math.max(1, start.sc * d / start.d));
+      tx = start.cx - (start.cx - start.tx) * ns / start.sc; ty = start.cy - (start.cy - start.ty) * ns / start.sc; sc = ns;
+      clamp(); apply(); moved = true;
+    }else if(a.length === 1 && start && start.x != null && sc > 1){
+      tx = start.tx + e.clientX - start.x; ty = start.ty + e.clientY - start.y; clamp(); apply();
+      if(Math.abs(e.clientX - start.x) + Math.abs(e.clientY - start.y) > 6) moved = true;
+    }
+  });
+  const up = e => {
+    pts.delete(e.pointerId);
+    const a = [...pts.values()];
+    start = a.length === 1 ? {x:a[0].x, y:a[0].y, tx, ty} : null;
+    if(!a.length && !moved){
+      const now = Date.now();
+      if(now - lastTap < 300){ zoomAt(e.clientX, e.clientY, sc > 1 ? 1 : 2.5); lastTap = 0; }
+      else lastTap = now;
+    }
+  };
+  z.addEventListener('pointerup', up); z.addEventListener('pointercancel', up);
+  z.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, sc * (e.deltaY < 0 ? 1.2 : 1/1.2)); }, {passive:false});
+  $('sh-img').addEventListener('click', ()=>{ const s = $('sh-img').src; if(s) openZoom(s); });
+})();
 
 async function copyImage(x){
   if(!x.img){ toast('ما كانش صورة لهذا الموديل'); return; }
