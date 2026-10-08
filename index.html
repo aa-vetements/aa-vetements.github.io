@@ -364,7 +364,7 @@ function renderChips(){
 
 // offre lot : ex « 4 بـ 1000 دج — اختاري الألوان »
 const offerHtml = m => (m.bundle && m.bundle.n >= 2 && m.bundle.p > 0)
-  ? '<div class="offer">🎁 ' + m.bundle.n + ' بـ <bdi dir="ltr">' + money(m.bundle.p) + '</bdi> دج <small>— اختاري الألوان لي تحبي</small></div>' : '';
+  ? '<div class="offer">🎁 ' + m.bundle.n + ' بـ <bdi dir="ltr">' + money(m.bundle.p) + '</bdi> دج <small>— خلطي الموديلات والألوان لي تحبي</small></div>' : '';
 const priceHtml = m => (m.minPrice !== m.maxPrice ? '<small>من</small>' : '')
   + '<bdi dir="ltr">' + money(m.minPrice) + '</bdi><small>دج</small>';
 
