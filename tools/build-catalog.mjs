@@ -97,7 +97,8 @@ async function main() {
         price: Number(pc.price) || 0, qty: Number(pc.qty) || 0, code: String(pc.code || '') });
     }
     if (!pieces.length) continue;
-    models.push({ id: p.id, cat: p.cat || '', order: p.order || 0, name: p.name || '', pieces });
+    const bundle = (p.bundle && p.bundle.n >= 2 && p.bundle.price > 0) ? { n: p.bundle.n, p: p.bundle.price } : null;
+    models.push({ id: p.id, cat: p.cat || '', order: p.order || 0, name: p.name || '', pieces, bundle });
   }
 
   let logo = '';

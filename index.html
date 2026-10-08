@@ -165,6 +165,9 @@
     min-height:0;
   }
   .price-row{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 10px;}
+  .offer{margin:-2px 0 10px;padding:7px 10px;border-radius:10px;background:linear-gradient(90deg,#b3325f,#d4558a);color:#fff;font-weight:800;font-size:14px;line-height:1.4;}
+  .offer small{font-weight:600;opacity:.9;font-size:11.5px;}
+  #sh-offer .offer{margin:-4px 0 14px;font-size:16px;}
   .price{display:inline-flex;align-items:baseline;gap:3px;font-size:18px;font-weight:800;color:#b3325f;background:#fbe9ef;padding:3px 11px;border-radius:10px;}
   .price small{font-size:12px;font-weight:700;color:#b3325f;opacity:.8;}
   .code{font-size:11px;color:#b3a2a9;direction:ltr;}
@@ -359,6 +362,9 @@ function renderChips(){
   categories().forEach(c=> mk(c, c, allItems.filter(x=>x.cat===c).length));
 }
 
+// offre lot : ex « 4 بـ 1000 دج — اختاري الألوان »
+const offerHtml = m => (m.bundle && m.bundle.n >= 2 && m.bundle.p > 0)
+  ? '<div class="offer">🎁 ' + m.bundle.n + ' بـ <bdi dir="ltr">' + money(m.bundle.p) + '</bdi> دج <small>— اختاري الألوان لي تحبي</small></div>' : '';
 const priceHtml = m => (m.minPrice !== m.maxPrice ? '<small>من</small>' : '')
   + '<bdi dir="ltr">' + money(m.minPrice) + '</bdi><small>دج</small>';
 
@@ -377,8 +383,9 @@ function renderGrid(){
   list.forEach((m, i)=>{
     const n = m.pieces.length, cover = m.pieces[0];
     const last = m.pieces.reduce((t,x)=>t+x.qty,0) <= 2;
-    const sw = m.pieces.slice(0,5).map(x=>'<span class="sw" style="background-image:url(\'' + x.img + '\')"></span>').join('')
-      + (n > 5 ? '<span class="sw-more">+' + (n-5) + '</span>' : '');
+    const SW = 3;   // 3 pastilles max : « شوفي الألوان » reste lisible
+    const sw = m.pieces.slice(0,SW).map(x=>'<span class="sw" style="background-image:url(\'' + x.img + '\')"></span>').join('')
+      + (n > SW ? '<span class="sw-more">+' + (n-SW) + '</span>' : '');
     const card = document.createElement('article');
     card.className = 'card';
     card.style.animationDelay = Math.min(i, 12) * 25 + 'ms';
@@ -393,6 +400,7 @@ function renderGrid(){
         <div class="name">${esc(m.name)}</div>
         ${n > 1 ? '<button class="swatches"><span class="dots">' + sw + '</span><span class="see">شوفي الألوان<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></span></button>' : ''}
         <div class="price-row"><div class="price">${priceHtml(m)}</div></div>
+        ${offerHtml(m)}
         <div class="actions">
           <button class="btn copy">${COPY_ICON} نسخ الصورة</button>
         </div>
@@ -412,6 +420,8 @@ function showPiece(idx){
   $('sh-img').src = x.full||x.img;
   $('sh-color').innerHTML = m.pieces.length > 1 ? 'اللون: <b>' + esc(x.color) + '</b>' : '';
   $('sh-price').innerHTML = '<bdi dir="ltr">' + money(x.price) + '</bdi><small>دج</small>';
+  let of = $('sh-offer'); if(!of){ of = document.createElement('div'); of.id = 'sh-offer'; $('sh-price').insertAdjacentElement('afterend', of); }
+  of.innerHTML = offerHtml(m);
   [...$('sh-thumbs').children].forEach((el,k)=> el.classList.toggle('on', k===idx));
   $('sh-copy').innerHTML = COPY_ICON + ' نسخ صورة هذا اللون';
   if(m.pieces.length === 1) $('sh-copy').innerHTML = COPY_ICON + ' نسخ الصورة';
@@ -562,7 +572,7 @@ async function applyLight(){
       }
       pieces.push({t:k.t, f:k.f, code:x.k, qty:x.q, price:x.p, color: x.c || k.color || ('لون ' + (i+1))});
     }
-    if(pieces.length) models.push({id, cat:it.cat, order:it.o, name:it.n, pieces});
+    if(pieces.length) models.push({id, cat:it.cat, order:it.o, name:it.n, pieces, bundle: it.b || null});
   }
   show(fromCatalog(models.sort((a,b)=> a.order - b.order)));
 }
