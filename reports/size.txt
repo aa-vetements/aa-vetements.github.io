@@ -1,0 +1,15 @@
+produits: 63
+taille totale: 13561 KB
+photos: 162, poids photos: 13511 KB (moyenne 83 KB)
+plus gros produit: نويزات 1 822 KB
+top 10:
+  822 KB  8 photos  نويزات 1
+  732 KB  9 photos  بيجامات 3
+  499 KB  7 photos  فوندغوب 1
+  481 KB  5 photos  فوندغوب 13
+  420 KB  4 photos  بيجامات 13
+  418 KB  6 photos  براسيار جيب 2
+  403 KB  6 photos  فوندغوب 15
+  403 KB  4 photos  فوندغوب 18
+  358 KB  5 photos  براسيار جيب 5
+  353 KB  4 photos  بيجامات 4
