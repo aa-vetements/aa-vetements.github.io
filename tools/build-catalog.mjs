@@ -47,6 +47,15 @@ async function getProducts() {
   return out;
 }
 
+// photo complète : le produit ne garde qu'une miniature, la vraie photo est dans photos/{imgId}
+function fnv(s){ s = String(s || ''); let h = 2166136261; for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h>>>0).toString(36) + s.length.toString(36); }
+async function fullOf(o){
+  if(o && o.imgId && o.img && o.imgTh && fnv(o.img) === o.imgTh){
+    try{ const d = await getDoc('photos/' + o.imgId); if(d && d.d) return d.d; }catch(e){}
+  }
+  return o ? o.img : '';
+}
+
 const used = new Set();
 async function images(dataUrl, sizes) {
   const m = String(dataUrl || '').match(/^data:image\/[a-z+]+;base64,(.*)$/s);
@@ -73,16 +82,16 @@ async function main() {
   const models = [];
   for (const p of products.sort((a, b) => (a.order || 0) - (b.order || 0))) {
     if (!p || !p.id) continue;
-    const raw = [{ img: p.img, qty: p.qty, price: p.price, code: p.code, color: p.colorName || '' }];
+    const raw = [{ src: p, qty: p.qty, price: p.price, code: p.code, color: p.colorName || '' }];
     (p.colors || []).forEach((c, i) => {
       if (!c) return;
-      raw.push({ img: c.img, qty: c.qty, price: (c.price != null && c.price !== '') ? c.price : p.price,
+      raw.push({ src: c, qty: c.qty, price: (c.price != null && c.price !== '') ? c.price : p.price,
         code: c.code || `${p.id}-${i + 1}`, color: c.name || '' });
     });
     const pieces = [];
     for (const pc of raw) {
-      if (!pc.img || (Number(pc.qty) || 0) <= 0) continue;
-      const im = await images(pc.img, [['t', 480, 70], ['f', 1080, 80]]);
+      if (!pc.src || !pc.src.img || (Number(pc.qty) || 0) <= 0) continue;
+      const im = await images(await fullOf(pc.src), [['t', 480, 70], ['f', 1080, 80]]);
       if (!im) continue;
       pieces.push({ t: im.t, f: im.f, color: pc.color || `لون ${pieces.length + 1}`,
         price: Number(pc.price) || 0, qty: Number(pc.qty) || 0, code: String(pc.code || '') });
