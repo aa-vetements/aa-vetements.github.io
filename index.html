@@ -25,7 +25,7 @@
 <meta name="twitter:image" content="https://aa-vetements.github.io/og-image-v2.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="preload" href="catalog.json" as="fetch" crossorigin>
 <style>
   :root{
@@ -338,7 +338,7 @@ function inStockModels(products){
 
 function fromCatalog(models){
   return models.map(m=>{
-    const pieces = m.pieces.map(x=>({...x, img:x.t, full:x.f}));
+    const pieces = m.pieces.map(x=>({...x, img:x.t, full:x.f, sw:x.s||x.t}));
     const prices = pieces.map(x=>x.price);
     return {...m, pieces, minPrice:Math.min(...prices), maxPrice:Math.max(...prices),
       search:(m.name+' '+m.cat+' '+pieces.map(x=>x.color+' '+x.code).join(' ')).toLowerCase()};
@@ -374,6 +374,14 @@ const offerHtml = m => (m.bundle && m.bundle.n >= 2 && m.bundle.p > 0)
 const priceHtml = m => (m.minPrice !== m.maxPrice ? '<small>من</small>' : '')
   + '<bdi dir="ltr">' + money(m.minPrice) + '</bdi><small>دج</small>';
 
+// pastilles de couleur : chargées seulement quand le modèle arrive à l'écran
+const bgObs = ('IntersectionObserver' in window) ? new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(!e.isIntersecting) return; e.target.querySelectorAll('[data-bg]').forEach(el=>{ el.style.backgroundImage = 'url(\'' + el.dataset.bg + '\')'; el.removeAttribute('data-bg'); }); bgObs.unobserve(e.target); });
+}, {rootMargin:'300px 0px'}) : null;
+function lazyBg(card){
+  if(bgObs) bgObs.observe(card);
+  else card.querySelectorAll('[data-bg]').forEach(el=>{ el.style.backgroundImage = 'url(\'' + el.dataset.bg + '\')'; });
+}
 function renderGrid(){
   let list = allItems.slice();
   if(activeCat !== 'ALL') list = list.filter(x=> x.cat === activeCat);
@@ -390,7 +398,7 @@ function renderGrid(){
     const n = m.pieces.length, cover = m.pieces[0];
     const last = m.pieces.reduce((t,x)=>t+x.qty,0) <= 2;
     const SW = 3;   // 3 pastilles max : « شوفي الألوان » reste lisible
-    const sw = m.pieces.slice(0,SW).map(x=>'<span class="sw" style="background-image:url(\'' + x.img + '\')"></span>').join('')
+    const sw = m.pieces.slice(0,SW).map(x=>'<span class="sw" data-bg="' + esc(x.sw||x.img) + '"></span>').join('')
       + (n > SW ? '<span class="sw-more">+' + (n-SW) + '</span>' : '');
     const card = document.createElement('article');
     card.className = 'card';
@@ -413,7 +421,10 @@ function renderGrid(){
       </div>`;
     const thumb = card.querySelector('.thumb'), img = card.querySelector('img');
     img.onload = ()=> thumb.classList.add('loaded');
+    if(i < 6){ img.loading = 'eager'; img.fetchPriority = 'high'; }   // les premiers modèles tout de suite
+    img.decoding = 'async';
     img.src = cover.img;
+    lazyBg(card);
     card.onclick = ()=> openModel(m);
     card.querySelector('.copy').onclick = e=>{ e.stopPropagation(); copyImage({img:cover.full||cover.img, name:m.name + ' ' + cover.color}); };
     grid.appendChild(card);
@@ -423,7 +434,10 @@ function renderGrid(){
 let curModel = null;
 function showPiece(idx){
   const m = curModel, x = m.pieces[idx];
-  $('sh-img').src = x.full||x.img;
+  // vignette déjà chargée tout de suite, puis la photo HD dès qu'elle est prête
+  const shImg = $('sh-img'), hd = x.full||x.img; window.__shHd = hd;
+  shImg.src = x.img;
+  if(hd !== x.img){ const pre = new Image(); pre.onload = ()=>{ if(curModel === m && shImg.src.endsWith(x.img.split('/').pop())) shImg.src = hd; }; pre.src = hd; }
   $('sh-color').innerHTML = m.pieces.length > 1 ? 'اللون: <b>' + esc(x.color) + '</b>' : '';
   $('sh-price').innerHTML = '<bdi dir="ltr">' + money(x.price) + '</bdi><small>دج</small>';
   let of = $('sh-offer'); if(!of){ of = document.createElement('div'); of.id = 'sh-offer'; $('sh-price').insertAdjacentElement('afterend', of); }
@@ -521,7 +535,7 @@ window.addEventListener('popstate', ()=>{
   };
   z.addEventListener('pointerup', up); z.addEventListener('pointercancel', up);
   z.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, sc * (e.deltaY < 0 ? 1.2 : 1/1.2)); }, {passive:false});
-  $('sh-img').addEventListener('click', ()=>{ const s = $('sh-img').src; if(s) openZoom(s); });
+  $('sh-img').addEventListener('click', ()=>{ const s = window.__shHd || $('sh-img').src; if(s) openZoom(s); });
 })();
 
 async function copyImage(x){

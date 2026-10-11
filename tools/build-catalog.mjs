@@ -91,9 +91,10 @@ async function main() {
     const pieces = [];
     for (const pc of raw) {
       if (!pc.src || !pc.src.img || (Number(pc.qty) || 0) <= 0) continue;
-      const im = await images(await fullOf(pc.src), [['t', 480, 70], ['f', 1080, 80]]);
+      // s = pastille couleur (minuscule), t = vignette de la grille, h = photo HD ouverte par la cliente
+      const im = await images(await fullOf(pc.src), [['s', 96, 60], ['t', 480, 70], ['h', 1200, 90]]);
       if (!im) continue;
-      pieces.push({ t: im.t, f: im.f, color: pc.color || `لون ${pieces.length + 1}`,
+      pieces.push({ s: im.s, t: im.t, f: im.h, color: pc.color || `لون ${pieces.length + 1}`,
         price: Number(pc.price) || 0, qty: Number(pc.qty) || 0, code: String(pc.code || '') });
     }
     if (!pieces.length) continue;
