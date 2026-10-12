@@ -577,10 +577,14 @@ $('search').addEventListener('input', e=>{ searchTerm = e.target.value; renderGr
 window.addEventListener('scroll', ()=> $('bar').classList.toggle('scrolled', window.scrollY > 120), {passive:true});
 
 function setLogo(url){ if(!url) return; const l = $('logo'); l.style.backgroundImage = 'url("' + url + '")'; l.textContent = ''; }
+let wantModel = null;
+try{ wantModel = new URLSearchParams(location.search).get('m'); }catch(e){}
 function show(items){
   allItems = items;
   if(activeCat !== 'ALL' && !allItems.some(x=> x.cat === activeCat)) activeCat = 'ALL';
   renderChips(); renderGrid();
+  // lien direct vers un modèle : ?m=<id> (cartes du chatbot Messenger)
+  if(wantModel){ const m = allItems.find(x=> String(x.id) === wantModel); wantModel = null; if(m) setTimeout(()=> openModel(m), 50); }
 }
 
 // 1) Catalogue léger (mis à jour toutes les 5 min depuis Atelier Stock) : affichage immédiat
