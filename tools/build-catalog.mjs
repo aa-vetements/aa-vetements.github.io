@@ -64,11 +64,13 @@ async function images(dataUrl, sizes) {
   const buf = Buffer.from(m[1], 'base64');
   const out = {};
   for (const [tag, w, q] of sizes) {
-    const jpg = tag === 'm';   // m = JPEG pour le chatbot Messenger (le webp n'y passe pas partout)
+    const jpg = tag === 'q';   // q = JPEG carré pour le chatbot Messenger (photo entière, fond blanc)
     const file = `${IMG_DIR}/${h}-${tag}.${jpg ? 'jpg' : 'webp'}`;
     used.add(file);
     if (!existsSync(file)) {
-      const img = sharp(buf).rotate().resize({ width: w, withoutEnlargement: true });
+      const img = jpg
+        ? sharp(buf).rotate().resize({ width: w, height: w, fit: 'contain', background: '#ffffff' }).flatten({ background: '#ffffff' })
+        : sharp(buf).rotate().resize({ width: w, withoutEnlargement: true });
       await (jpg ? img.jpeg({ quality: q, mozjpeg: true }) : img.webp({ quality: q })).toFile(file);
     }
     out[tag] = file;
@@ -95,10 +97,10 @@ async function main() {
       if (!pc.src || !pc.src.img || (Number(pc.qty) || 0) <= 0) continue;
       // s = pastille couleur (minuscule), t = vignette de la grille, h = photo HD ouverte par la cliente
       const sizes = [['s', 96, 60], ['t', 480, 70], ['h', 1200, 90]];
-      if (!pieces.length) sizes.push(['m', 640, 80]);   // couverture du modèle pour le chatbot
+      if (!pieces.length) sizes.push(['q', 800, 82]);   // couverture carrée du modèle pour le chatbot
       const im = await images(await fullOf(pc.src), sizes);
       if (!im) continue;
-      pieces.push({ s: im.s, t: im.t, f: im.h, ...(im.m ? { m: im.m } : {}), color: pc.color || `لون ${pieces.length + 1}`,
+      pieces.push({ s: im.s, t: im.t, f: im.h, ...(im.q ? { q: im.q } : {}), color: pc.color || `لون ${pieces.length + 1}`,
         price: Number(pc.price) || 0, qty: Number(pc.qty) || 0, code: String(pc.code || '') });
     }
     if (!pieces.length) continue;
