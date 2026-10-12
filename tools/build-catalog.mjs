@@ -64,10 +64,12 @@ async function images(dataUrl, sizes) {
   const buf = Buffer.from(m[1], 'base64');
   const out = {};
   for (const [tag, w, q] of sizes) {
-    const file = `${IMG_DIR}/${h}-${tag}.webp`;
+    const jpg = tag === 'm';   // m = JPEG pour le chatbot Messenger (le webp n'y passe pas partout)
+    const file = `${IMG_DIR}/${h}-${tag}.${jpg ? 'jpg' : 'webp'}`;
     used.add(file);
     if (!existsSync(file)) {
-      await sharp(buf).rotate().resize({ width: w, withoutEnlargement: true }).webp({ quality: q }).toFile(file);
+      const img = sharp(buf).rotate().resize({ width: w, withoutEnlargement: true });
+      await (jpg ? img.jpeg({ quality: q, mozjpeg: true }) : img.webp({ quality: q })).toFile(file);
     }
     out[tag] = file;
   }
@@ -92,9 +94,11 @@ async function main() {
     for (const pc of raw) {
       if (!pc.src || !pc.src.img || (Number(pc.qty) || 0) <= 0) continue;
       // s = pastille couleur (minuscule), t = vignette de la grille, h = photo HD ouverte par la cliente
-      const im = await images(await fullOf(pc.src), [['s', 96, 60], ['t', 480, 70], ['h', 1200, 90]]);
+      const sizes = [['s', 96, 60], ['t', 480, 70], ['h', 1200, 90]];
+      if (!pieces.length) sizes.push(['m', 640, 80]);   // couverture du modèle pour le chatbot
+      const im = await images(await fullOf(pc.src), sizes);
       if (!im) continue;
-      pieces.push({ s: im.s, t: im.t, f: im.h, color: pc.color || `لون ${pieces.length + 1}`,
+      pieces.push({ s: im.s, t: im.t, f: im.h, ...(im.m ? { m: im.m } : {}), color: pc.color || `لون ${pieces.length + 1}`,
         price: Number(pc.price) || 0, qty: Number(pc.qty) || 0, code: String(pc.code || '') });
     }
     if (!pieces.length) continue;
@@ -116,7 +120,7 @@ async function main() {
   // supprime les photos qui ne servent plus (pièce vendue, photo changée)
   for (const f of readdirSync(IMG_DIR)) {
     const path = `${IMG_DIR}/${f}`;
-    if (f.endsWith('.webp') && !used.has(path)) unlinkSync(path);
+    if ((f.endsWith('.webp') || f.endsWith('.jpg')) && !used.has(path)) unlinkSync(path);
   }
   console.log(`${models.length} modèles, ${models.reduce((t, m) => t + m.pieces.length, 0)} pièces en stock, ${json === prev ? 'aucun changement' : 'catalogue mis à jour'}`);
 }
