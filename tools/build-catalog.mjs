@@ -97,7 +97,7 @@ async function main() {
       if (!pc.src || !pc.src.img || (Number(pc.qty) || 0) <= 0) continue;
       // s = pastille couleur (minuscule), t = vignette de la grille, h = photo HD ouverte par la cliente
       const sizes = [['s', 96, 60], ['t', 480, 70], ['h', 1200, 90]];
-      if (!pieces.length) sizes.push(['q', 800, 82]);   // couverture carrée du modèle pour le chatbot
+      sizes.push(['q', 800, 82]);   // photo carrée (entière, fond blanc) de chaque couleur pour le chatbot
       const im = await images(await fullOf(pc.src), sizes);
       if (!im) continue;
       pieces.push({ s: im.s, t: im.t, f: im.h, ...(im.q ? { q: im.q } : {}), color: pc.color || `لون ${pieces.length + 1}`,
