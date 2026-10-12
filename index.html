@@ -302,6 +302,9 @@ const firebaseConfig = {
 
 const COPY_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
 let allItems = [], catOrder = [], activeCat = 'ALL', searchTerm = '';
+// lien direct vers une catégorie : ?c=pyjama (pour les réponses Messenger)
+const CAT_LINKS = {pyjama:'بيجامات', fond:'فوندغوب', robe:'روبات', nuisette:'نويزات', bra:'براسيار جيب', short:'بيستي شورت', hijab:'حجابات'};
+(()=>{ try{ const c = new URLSearchParams(location.search).get('c'); if(c) activeCat = CAT_LINKS[c] || decodeURIComponent(c); }catch(e){} })();
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
