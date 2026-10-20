@@ -429,7 +429,7 @@ function renderGrid(){
     img.src = cover.img;
     lazyBg(card);
     card.onclick = ()=> openModel(m);
-    card.querySelector('.copy').onclick = e=>{ e.stopPropagation(); copyImage({img:cover.full||cover.img, name:m.name + ' ' + cover.color}); };
+    card.querySelector('.copy').onclick = e=>{ e.stopPropagation(); copyImage({img:cover.full||cover.img, q:cover.q, name:m.name + ' ' + cover.color, id:m.id}); };
     grid.appendChild(card);
   });
 }
@@ -448,7 +448,7 @@ function showPiece(idx){
   [...$('sh-thumbs').children].forEach((el,k)=> el.classList.toggle('on', k===idx));
   $('sh-copy').innerHTML = COPY_ICON + ' نسخ صورة هذا اللون';
   if(m.pieces.length === 1) $('sh-copy').innerHTML = COPY_ICON + ' نسخ الصورة';
-  $('sh-copy').onclick = ()=> copyImage({img:x.full||x.img, name:m.name + ' ' + x.color});
+  $('sh-copy').onclick = ()=> copyImage({img:x.full||x.img, q:x.q, name:m.name + ' ' + x.color, id:m.id});
 }
 function openModel(m){
   curModel = m;
@@ -541,8 +541,29 @@ window.addEventListener('popstate', ()=>{
   $('sh-img').addEventListener('click', ()=>{ const s = window.__shHd || $('sh-img').src; if(s) openZoom(s); });
 })();
 
+// navigateur intégré de Messenger / Facebook / Instagram : copier ou télécharger une image n'y marche pas
+// → on affiche la photo en grand (vraie image JPEG) : appui long → « Enregistrer l'image », ou ouvrir dans Chrome
+const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|FB4A|Messenger|Instagram|Line\//i.test(navigator.userAgent || '');
+function saveSheet(x){
+  const src = x.q || x.img;
+  let m = document.getElementById('saveSheet');
+  if(!m){ m = document.createElement('div'); m.id = 'saveSheet'; document.body.appendChild(m); }
+  const android = /Android/i.test(navigator.userAgent || '');
+  const here = location.origin + location.pathname + (x.id ? '?m=' + encodeURIComponent(x.id) : '');
+  const chrome = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+  m.innerHTML = `<button class="ss-x" aria-label="إغلاق">✕</button>
+    <div class="ss-t">📸 <b>اضغطي مطوّل على الصورة</b><br>واختاري «حفظ الصورة» / «Télécharger l'image»</div>
+    <img class="ss-img" src="${src}" alt="">
+    <div class="ss-s">من بعد ابعثيها لصفحتنا في المسنجر مع المقاس والولاية 💕</div>
+    ${android ? `<a class="ss-c" href="${chrome}">🌐 ما خدمتش؟ افتحي الكتالوج في Chrome</a>` : ''}`;
+  m.classList.add('show');
+  m.querySelector('.ss-x').onclick = () => m.classList.remove('show');
+  m.onclick = e => { if(e.target === m) m.classList.remove('show'); };
+}
 async function copyImage(x){
   if(!x.img){ toast('ما كانش صورة لهذا الموديل'); return; }
+  if(IN_APP){ saveSheet(x); return; }
+  if(x.q) x = {...x, img: x.q};   // JPEG carré : accepté partout (presse-papiers, galerie)
   try{
     const blob = await (await fetch(x.img)).blob();
     // le presse-papiers accepte le PNG partout, pas toujours le JPEG
@@ -555,6 +576,15 @@ async function copyImage(x){
     throw new Error('no clipboard');
   }catch(e){ downloadImage(x); }
 }
+(function(){
+  const st = document.createElement('style');
+  st.textContent = `#saveSheet{position:fixed;inset:0;z-index:9999;background:rgba(20,10,16,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 14px;text-align:center;color:#fff;}
+    #saveSheet.show{display:flex;} #saveSheet .ss-t{font-size:16px;line-height:1.6;} #saveSheet .ss-s{font-size:14px;opacity:.85;}
+    #saveSheet .ss-img{max-width:100%;max-height:62vh;border-radius:14px;background:#fff;-webkit-touch-callout:default;user-select:auto;}
+    #saveSheet .ss-x{position:absolute;top:14px;left:14px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:20px;}
+    #saveSheet .ss-c{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:10px 14px;text-decoration:none;font-size:14px;font-weight:700;}`;
+  document.head.appendChild(st);
+})();
 function toPng(blob){
   return new Promise((res, rej)=>{
     const im = new Image();
@@ -568,7 +598,7 @@ function toPng(blob){
 function downloadImage(x){
   const a = document.createElement('a');
   a.href = x.img;
-  a.download = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu,'_') + (String(x.img).includes('.webp') ? '.webp' : '.jpg');
+  a.download = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu,'_') + (String(x.img).includes('.webp') ? '.webp' : '.jpg');   // x.img = JPEG quand il existe
   document.body.appendChild(a); a.click(); a.remove();
   toast('تحمّلت الصورة ✅ زيديها في المسنجر من الصور');
 }
