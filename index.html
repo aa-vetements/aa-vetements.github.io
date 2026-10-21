@@ -552,7 +552,7 @@ function saveSheet(x){
   const here = location.origin + location.pathname + (x.id ? '?m=' + encodeURIComponent(x.id) : '');
   const chrome = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
   m.innerHTML = `<button class="ss-x" aria-label="إغلاق">✕</button>
-    <div class="ss-t">✅ إذا ما تحمّلتش الصورة:<br>📸 <b>اضغطي مطوّل عليها</b> واختاري «حفظ الصورة» / «Télécharger l'image»</div>
+    <div class="ss-t">📸 <b>اضغطي مطوّل على الصورة</b><br>واختاري «حفظ الصورة» / «Télécharger l'image»</div>
     <img class="ss-img" src="${src}" alt="">
     <div class="ss-s">من بعد ابعثيها لصفحتنا في المسنجر مع المقاس والولاية 💕</div>
     ${android ? `<a class="ss-c" href="${chrome}">🌐 ما خدمتش؟ افتحي الكتالوج في Chrome</a>` : ''}`;
@@ -563,6 +563,8 @@ function saveSheet(x){
 // « Enregistrer la photo » : la photo (JPEG carré) est téléchargée dans le téléphone de la cliente
 async function copyImage(x){
   if(!x.img){ toast('ما كانش صورة لهذا الموديل'); return; }
+  // Messenger / Facebook : leur navigateur bloque les téléchargements → on montre directement la photo (appui long → enregistrer)
+  if(IN_APP){ saveSheet(x); return; }
   const src = x.q || x.img;
   const name = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu, '_') + (/\.webp($|\?)/.test(src) ? '.webp' : '.jpg');
   let blob = null;
@@ -582,10 +584,18 @@ async function copyImage(x){
     document.body.appendChild(a); a.click(); a.remove();
     if(blob) setTimeout(() => URL.revokeObjectURL(url), 60000);
   }catch(e){}
-  // dans Messenger / Facebook le téléchargement peut être bloqué : on montre aussi la photo (appui long → enregistrer)
-  if(IN_APP){ saveSheet(x); return; }
   toast('تحمّلت الصورة ✅ تلقايها في الغالري، ابعثيها لينا في المسنجر');
 }
+(function(){   // style de la fenêtre « enregistrer la photo »
+  const st = document.createElement('style');
+  st.textContent = `html,body{overflow-x:hidden;}
+    #saveSheet{position:fixed;inset:0;z-index:9999;background:rgba(20,10,16,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 14px;text-align:center;color:#fff;}
+    #saveSheet.show{display:flex;} #saveSheet .ss-t{font-size:16px;line-height:1.6;} #saveSheet .ss-s{font-size:14px;opacity:.85;}
+    #saveSheet .ss-img{max-width:100%;max-height:62vh;border-radius:14px;background:#fff;-webkit-touch-callout:default;user-select:auto;}
+    #saveSheet .ss-x{position:absolute;top:14px;left:14px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:20px;}
+    #saveSheet .ss-c{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:10px 14px;text-decoration:none;font-size:14px;font-weight:700;}`;
+  document.head.appendChild(st);
+})();
 function toPng(blob){
   return new Promise((res, rej)=>{
     const im = new Image();
