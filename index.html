@@ -269,7 +269,7 @@
 <section class="how">
   <div class="how-box">
     <h2>كيفاش تطلبي؟</h2>
-    <div class="step"><span class="num">1</span><span>افتحي الموديل اللي عجبك، اختاري <b>اللون</b> واضغطي <b>«نسخ الصورة»</b>.</span></div>
+    <div class="step"><span class="num">1</span><span>افتحي الموديل اللي عجبك، اختاري <b>اللون</b> واضغطي <b>«حفظ الصورة»</b> — تتحمّل في تيليفونك.</span></div>
     <div class="step"><span class="num">2</span><span>ابعثي الصورة لصفحتنا في <b>المسنجر</b> مع المقاس والولاية.</span></div>
     <div class="step"><span class="num">3</span><span>نأكدو معاك الطلبية، وتخلصي <b>كي توصلك</b> السلعة.</span></div>
   </div>
@@ -285,7 +285,7 @@
     <div class="sh-label" id="sh-label"></div>
     <div class="sh-thumbs" id="sh-thumbs"></div>
     <button class="btn" id="sh-copy"></button>
-    <div class="sh-note">انسخي صورة اللون اللي عجبك وابعثيها لينا في المسنجر 💌</div>
+    <div class="sh-note">احفظي صورة اللون اللي عجبك وابعثيها لينا في المسنجر 💌</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -300,7 +300,7 @@ const firebaseConfig = {
   appId: "1:329571073759:web:ceb6d31bdef660dd25336a"
 };
 
-const COPY_ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+const COPY_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>';   // icône « télécharger"
 let allItems = [], catOrder = [], activeCat = 'ALL', searchTerm = '';
 // lien direct vers une catégorie : ?c=pyjama (pour les réponses Messenger)
 const CAT_LINKS = {pyjama:'بيجامات', fond:'فوندغوب', robe:'روبات', nuisette:'نويزات', bra:'براسيار جيب', short:'بيستي شورت', hijab:'حجابات'};
@@ -419,7 +419,7 @@ function renderGrid(){
         <div class="price-row"><div class="price">${priceHtml(m)}</div></div>
         ${offerHtml(m)}
         <div class="actions">
-          <button class="btn copy">${COPY_ICON} نسخ الصورة</button>
+          <button class="btn copy">${COPY_ICON} حفظ الصورة</button>
         </div>
       </div>`;
     const thumb = card.querySelector('.thumb'), img = card.querySelector('img');
@@ -446,8 +446,8 @@ function showPiece(idx){
   let of = $('sh-offer'); if(!of){ of = document.createElement('div'); of.id = 'sh-offer'; $('sh-price').insertAdjacentElement('afterend', of); }
   of.innerHTML = offerHtml(m);
   [...$('sh-thumbs').children].forEach((el,k)=> el.classList.toggle('on', k===idx));
-  $('sh-copy').innerHTML = COPY_ICON + ' نسخ صورة هذا اللون';
-  if(m.pieces.length === 1) $('sh-copy').innerHTML = COPY_ICON + ' نسخ الصورة';
+  $('sh-copy').innerHTML = COPY_ICON + ' حفظ صورة هذا اللون';
+  if(m.pieces.length === 1) $('sh-copy').innerHTML = COPY_ICON + ' حفظ الصورة';
   $('sh-copy').onclick = ()=> copyImage({img:x.full||x.img, q:x.q, name:m.name + ' ' + x.color, id:m.id});
 }
 function openModel(m){
@@ -552,7 +552,7 @@ function saveSheet(x){
   const here = location.origin + location.pathname + (x.id ? '?m=' + encodeURIComponent(x.id) : '');
   const chrome = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
   m.innerHTML = `<button class="ss-x" aria-label="إغلاق">✕</button>
-    <div class="ss-t">📸 <b>اضغطي مطوّل على الصورة</b><br>واختاري «حفظ الصورة» / «Télécharger l'image»</div>
+    <div class="ss-t">✅ إذا ما تحمّلتش الصورة:<br>📸 <b>اضغطي مطوّل عليها</b> واختاري «حفظ الصورة» / «Télécharger l'image»</div>
     <img class="ss-img" src="${src}" alt="">
     <div class="ss-s">من بعد ابعثيها لصفحتنا في المسنجر مع المقاس والولاية 💕</div>
     ${android ? `<a class="ss-c" href="${chrome}">🌐 ما خدمتش؟ افتحي الكتالوج في Chrome</a>` : ''}`;
@@ -560,31 +560,32 @@ function saveSheet(x){
   m.querySelector('.ss-x').onclick = () => m.classList.remove('show');
   m.onclick = e => { if(e.target === m) m.classList.remove('show'); };
 }
+// « Enregistrer la photo » : la photo (JPEG carré) est téléchargée dans le téléphone de la cliente
 async function copyImage(x){
   if(!x.img){ toast('ما كانش صورة لهذا الموديل'); return; }
-  if(IN_APP){ saveSheet(x); return; }
-  if(x.q) x = {...x, img: x.q};   // JPEG carré : accepté partout (presse-papiers, galerie)
+  const src = x.q || x.img;
+  const name = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu, '_') + (/\.webp($|\?)/.test(src) ? '.webp' : '.jpg');
+  let blob = null;
+  try{ blob = await (await fetch(src)).blob(); }catch(e){}
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  // iPhone (Safari) : le partage propose « Enregistrer l'image » → elle va dans Photos
+  if(ios && blob && navigator.canShare){
+    try{
+      const f = new File([blob], name, {type: blob.type || 'image/jpeg'});
+      if(navigator.canShare({files: [f]})){ await navigator.share({files: [f]}); return; }
+    }catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  // Android / ordinateur : téléchargement → la photo apparaît dans la galerie (dossier « Téléchargements »)
   try{
-    const blob = await (await fetch(x.img)).blob();
-    // le presse-papiers accepte le PNG partout, pas toujours le JPEG
-    const png = blob.type === 'image/png' ? blob : await toPng(blob);
-    if(navigator.clipboard && window.ClipboardItem){
-      await navigator.clipboard.write([ new ClipboardItem({'image/png': png}) ]);
-      toast('تنسخت الصورة ✅ روحي للمسنجر وحطيها في المحادثة');
-      return;
-    }
-    throw new Error('no clipboard');
-  }catch(e){ downloadImage(x); }
+    const url = blob ? URL.createObjectURL(blob) : src;
+    const a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    if(blob) setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }catch(e){}
+  // dans Messenger / Facebook le téléchargement peut être bloqué : on montre aussi la photo (appui long → enregistrer)
+  if(IN_APP){ saveSheet(x); return; }
+  toast('تحمّلت الصورة ✅ تلقايها في الغالري، ابعثيها لينا في المسنجر');
 }
-(function(){
-  const st = document.createElement('style');
-  st.textContent = `#saveSheet{position:fixed;inset:0;z-index:9999;background:rgba(20,10,16,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 14px;text-align:center;color:#fff;}
-    #saveSheet.show{display:flex;} #saveSheet .ss-t{font-size:16px;line-height:1.6;} #saveSheet .ss-s{font-size:14px;opacity:.85;}
-    #saveSheet .ss-img{max-width:100%;max-height:62vh;border-radius:14px;background:#fff;-webkit-touch-callout:default;user-select:auto;}
-    #saveSheet .ss-x{position:absolute;top:14px;left:14px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:20px;}
-    #saveSheet .ss-c{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:10px 14px;text-decoration:none;font-size:14px;font-weight:700;}`;
-  document.head.appendChild(st);
-})();
 function toPng(blob){
   return new Promise((res, rej)=>{
     const im = new Image();
