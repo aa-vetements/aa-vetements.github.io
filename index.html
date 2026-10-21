@@ -269,7 +269,7 @@
 <section class="how">
   <div class="how-box">
     <h2>كيفاش تطلبي؟</h2>
-    <div class="step"><span class="num">1</span><span>افتحي الموديل اللي عجبك، اختاري <b>اللون</b> واضغطي <b>«حفظ الصورة»</b> — تتحمّل في تيليفونك.</span></div>
+    <div class="step"><span class="num">1</span><span id="how1">افتحي الموديل اللي عجبك، اختاري <b>اللون</b> واضغطي <b>«حفظ الصورة»</b> — تتحمّل في تيليفونك.</span></div>
     <div class="step"><span class="num">2</span><span>ابعثي الصورة لصفحتنا في <b>المسنجر</b> مع المقاس والولاية.</span></div>
     <div class="step"><span class="num">3</span><span>نأكدو معاك الطلبية، وتخلصي <b>كي توصلك</b> السلعة.</span></div>
   </div>
@@ -285,7 +285,7 @@
     <div class="sh-label" id="sh-label"></div>
     <div class="sh-thumbs" id="sh-thumbs"></div>
     <button class="btn" id="sh-copy"></button>
-    <div class="sh-note">احفظي صورة اللون اللي عجبك وابعثيها لينا في المسنجر 💌</div>
+    <div class="sh-note" id="sh-note">احفظي صورة اللون اللي عجبك وابعثيها لينا في المسنجر 💌</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -300,6 +300,9 @@ const firebaseConfig = {
   appId: "1:329571073759:web:ceb6d31bdef660dd25336a"
 };
 
+// dans Messenger / Facebook on ne peut pas enregistrer une photo → on demande une capture d'écran
+var IN_MSG = /FBAN|FBAV|FB_IAB|FBIOS|FB4A|Messenger|Instagram|Line\//i.test(navigator.userAgent || '');
+var SAVE_LBL = IN_MSG ? '📸 ديري كابتير' : 'حفظ الصورة';
 const COPY_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>';   // icône « télécharger"
 let allItems = [], catOrder = [], activeCat = 'ALL', searchTerm = '';
 // lien direct vers une catégorie : ?c=pyjama (pour les réponses Messenger)
@@ -419,7 +422,7 @@ function renderGrid(){
         <div class="price-row"><div class="price">${priceHtml(m)}</div></div>
         ${offerHtml(m)}
         <div class="actions">
-          <button class="btn copy">${COPY_ICON} حفظ الصورة</button>
+          <button class="btn copy">${IN_MSG ? '' : COPY_ICON} ${SAVE_LBL}</button>
         </div>
       </div>`;
     const thumb = card.querySelector('.thumb'), img = card.querySelector('img');
@@ -446,8 +449,8 @@ function showPiece(idx){
   let of = $('sh-offer'); if(!of){ of = document.createElement('div'); of.id = 'sh-offer'; $('sh-price').insertAdjacentElement('afterend', of); }
   of.innerHTML = offerHtml(m);
   [...$('sh-thumbs').children].forEach((el,k)=> el.classList.toggle('on', k===idx));
-  $('sh-copy').innerHTML = COPY_ICON + ' حفظ صورة هذا اللون';
-  if(m.pieces.length === 1) $('sh-copy').innerHTML = COPY_ICON + ' حفظ الصورة';
+  $('sh-copy').innerHTML = IN_MSG ? '📸 ديري كابتير لهذا اللون' : COPY_ICON + ' حفظ صورة هذا اللون';
+  if(m.pieces.length === 1) $('sh-copy').innerHTML = IN_MSG ? '📸 ديري كابتير' : COPY_ICON + ' حفظ الصورة';
   $('sh-copy').onclick = ()=> copyImage({img:x.full||x.img, q:x.q, name:m.name + ' ' + x.color, id:m.id});
 }
 function openModel(m){
@@ -484,7 +487,7 @@ window.addEventListener('popstate', ()=>{
 (function(){
   const z = document.createElement('div');
   z.id = 'zoom';
-  z.innerHTML = '<button class="z-close" aria-label="إغلاق">✕</button><img alt=""><div class="z-tip">📥 اضغطي مطوّل على الصورة باش تحفظيها<br>🔍 قربي بصبعين ولا اضغطي مرتين</div>';
+  z.innerHTML = '<button class="z-close" aria-label="إغلاق">✕</button><img alt=""><div class="z-tip">' + (IN_MSG ? '📸 ديري كابتير وابعثيلنا الصورة' : '📥 اضغطي مطوّل على الصورة باش تحفظيها') + '<br>🔍 قربي بصبعين ولا اضغطي مرتين</div>';
   document.body.appendChild(z);
   const img = z.querySelector('img');
   let sc = 1, tx = 0, ty = 0;
@@ -554,6 +557,10 @@ function dlHelp(x){
   b.classList.add('show');
   clearTimeout(dlHelp.t); dlHelp.t = setTimeout(() => b.classList.remove('show'), 9000);
 }
+if(IN_MSG){ try{
+  document.getElementById('how1').innerHTML = 'افتحي الموديل اللي عجبك، اختاري <b>اللون</b> و<b>ديري كابتير</b> (Capture d\'écran).';
+  document.getElementById('sh-note').textContent = 'ديري كابتير للون اللي عجبك وابعثيلنا الصورة في المسنجر 💌';
+}catch(e){} }
 function saveSheet(x){
   const src = x.q || x.img;
   let m = document.getElementById('saveSheet');
@@ -562,10 +569,9 @@ function saveSheet(x){
   const here = location.origin + location.pathname + (x.id ? '?m=' + encodeURIComponent(x.id) : '');
   const chrome = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
   m.innerHTML = `<button class="ss-x" aria-label="إغلاق">✕</button>
-    <div class="ss-t">📸 <b>اضغطي مطوّل على الصورة</b><br>واختاري «حفظ الصورة» / «Télécharger l'image»</div>
+    <div class="ss-t">📸 <b>ديري كابتير</b> وابعثيلنا الصورة في المسنجر</div>
     <img class="ss-img" src="${src}" alt="">
-    <div class="ss-s">من بعد ابعثيها لصفحتنا في المسنجر مع المقاس والولاية 💕</div>
-    ${android ? `<a class="ss-c" href="${chrome}">🌐 ما خدمتش؟ افتحي الكتالوج في Chrome</a>` : ''}`;
+    <div class="ss-s">مع المقاس والولاية 💕</div>`;
   m.classList.add('show');
   m.querySelector('.ss-x').onclick = () => m.classList.remove('show');
   m.onclick = e => { if(e.target === m) m.classList.remove('show'); };
@@ -573,15 +579,8 @@ function saveSheet(x){
 // « Enregistrer la photo » : la photo (JPEG carré) est téléchargée dans le téléphone de la cliente
 async function copyImage(x){
   if(!x.img){ toast('ما كانش صورة لهذا الموديل'); return; }
-  // Messenger / Facebook : on ouvre la photo comme « pièce jointe » (servie par le relais) → leur navigateur la télécharge
-  if(IN_APP){
-    const rel = String(x.q || x.img).replace(location.origin + location.pathname.replace(/[^/]*$/, ''), '');
-    if(/^img\/[\w.-]+\.(jpg|jpeg|png|webp)$/i.test(rel)){
-      location.href = DL_API + '?src=' + encodeURIComponent(rel) + '&name=' + encodeURIComponent(x.name || 'photo');
-      dlHelp(x);
-    } else saveSheet(x);
-    return;
-  }
+  // Messenger / Facebook : photo en grand + « ديري كابتير وابعثيلنا الصورة »
+  if(IN_APP){ saveSheet(x); return; }
   const src = x.q || x.img;
   const name = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu, '_') + (/\.webp($|\?)/.test(src) ? '.webp' : '.jpg');
   let blob = null;
