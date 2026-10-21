@@ -544,6 +544,16 @@ window.addEventListener('popstate', ()=>{
 // navigateur intégré de Messenger / Facebook / Instagram : copier ou télécharger une image n'y marche pas
 // → on affiche la photo en grand (vraie image JPEG) : appui long → « Enregistrer l'image », ou ouvrir dans Chrome
 const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|FB4A|Messenger|Instagram|Line\//i.test(navigator.userAgent || '');
+const DL_API = 'https://atelier-zr.mohammedsassiadda.workers.dev/dl';
+// petit bandeau après le téléchargement (au cas où le navigateur de Messenger le bloquerait)
+function dlHelp(x){
+  let b = document.getElementById('dlHelp');
+  if(!b){ b = document.createElement('div'); b.id = 'dlHelp'; document.body.appendChild(b); }
+  b.innerHTML = '⬇️ <b>تحمّلت الصورة</b> — تلقايها في الغالري.<br><u>ما لقيتيهاش؟ اضغطي هنا</u>';
+  b.onclick = () => { b.classList.remove('show'); saveSheet(x); };
+  b.classList.add('show');
+  clearTimeout(dlHelp.t); dlHelp.t = setTimeout(() => b.classList.remove('show'), 9000);
+}
 function saveSheet(x){
   const src = x.q || x.img;
   let m = document.getElementById('saveSheet');
@@ -563,8 +573,15 @@ function saveSheet(x){
 // « Enregistrer la photo » : la photo (JPEG carré) est téléchargée dans le téléphone de la cliente
 async function copyImage(x){
   if(!x.img){ toast('ما كانش صورة لهذا الموديل'); return; }
-  // Messenger / Facebook : leur navigateur bloque les téléchargements → on montre directement la photo (appui long → enregistrer)
-  if(IN_APP){ saveSheet(x); return; }
+  // Messenger / Facebook : on ouvre la photo comme « pièce jointe » (servie par le relais) → leur navigateur la télécharge
+  if(IN_APP){
+    const rel = String(x.q || x.img).replace(location.origin + location.pathname.replace(/[^/]*$/, ''), '');
+    if(/^img\/[\w.-]+\.(jpg|jpeg|png|webp)$/i.test(rel)){
+      location.href = DL_API + '?src=' + encodeURIComponent(rel) + '&name=' + encodeURIComponent(x.name || 'photo');
+      dlHelp(x);
+    } else saveSheet(x);
+    return;
+  }
   const src = x.q || x.img;
   const name = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu, '_') + (/\.webp($|\?)/.test(src) ? '.webp' : '.jpg');
   let blob = null;
@@ -589,6 +606,8 @@ async function copyImage(x){
 (function(){   // style de la fenêtre « enregistrer la photo »
   const st = document.createElement('style');
   st.textContent = `html,body{overflow-x:hidden;}
+    #dlHelp{position:fixed;left:12px;right:12px;bottom:18px;z-index:9998;background:#2b1a24;color:#fff;border-radius:14px;padding:12px 14px;font-size:14.5px;line-height:1.55;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translateY(140%);transition:transform .25s ease;}
+    #dlHelp.show{transform:none;} #dlHelp u{color:#ffd6e7;}
     #saveSheet{position:fixed;inset:0;z-index:9999;background:rgba(20,10,16,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px 14px;text-align:center;color:#fff;}
     #saveSheet.show{display:flex;} #saveSheet .ss-t{font-size:16px;line-height:1.6;} #saveSheet .ss-s{font-size:14px;opacity:.85;}
     #saveSheet .ss-img{max-width:100%;max-height:62vh;border-radius:14px;background:#fff;-webkit-touch-callout:default;user-select:auto;}
