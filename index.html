@@ -264,7 +264,8 @@
 </div>
 
 <div class="count" id="count"></div>
-<div class="grid" id="grid"></div>
+<div class="grid" id="grid"><div class="empty">جاري تحميل السلعة…</div></div>
+<noscript><div class="empty">باش تشوفي السلعة افتحي الرابط في Chrome</div></noscript>
 
 <section class="how">
   <div class="how-box">
@@ -310,7 +311,8 @@ const CAT_LINKS = {pyjama:'بيجامات', fond:'فوندغوب', robe:'روب�
 (()=>{ try{ const c = new URLSearchParams(location.search).get('c'); if(c) activeCat = CAT_LINKS[c] || decodeURIComponent(c); }catch(e){} })();
 
 const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function safeName(n){ return String(n || 'modele').replace(/[\s\/\\:*?"<>|#%&{}$!'@+`=]+/g, '_'); }
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = n => Number(n||0).toLocaleString('fr-FR').replace(/ | /g,' ');
 
 function toast(msg){
@@ -582,7 +584,7 @@ async function copyImage(x){
   // Messenger / Facebook : photo en grand + « ديري كابتير وابعثيلنا الصورة »
   if(IN_APP){ saveSheet(x); return; }
   const src = x.q || x.img;
-  const name = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu, '_') + (/\.webp($|\?)/.test(src) ? '.webp' : '.jpg');
+  const name = safeName(x.name) + (/\.webp($|\?)/.test(src) ? '.webp' : '.jpg');
   let blob = null;
   try{ blob = await (await fetch(src)).blob(); }catch(e){}
   const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
@@ -627,7 +629,7 @@ function toPng(blob){
 function downloadImage(x){
   const a = document.createElement('a');
   a.href = x.img;
-  a.download = (x.name || 'modele').replace(/[^\p{L}\p{N}_-]+/gu,'_') + (String(x.img).includes('.webp') ? '.webp' : '.jpg');   // x.img = JPEG quand il existe
+  a.download = safeName(x.name) + (String(x.img).includes('.webp') ? '.webp' : '.jpg');   // x.img = JPEG quand il existe
   document.body.appendChild(a); a.click(); a.remove();
   toast('تحمّلت الصورة ✅ زيديها في المسنجر من الصور');
 }
@@ -665,6 +667,7 @@ async function liveFallback(){
 function fail(){ $('grid').innerHTML = '<div class="empty">ما قدرناش نحمّلو السلعة، تأكدي من الأنترنت وعاودي</div>'; }
 
 $('grid').innerHTML = '<div class="empty">جاري تحميل السلعة…</div>';
+setTimeout(()=>{ if(!allItems.length && /جاري/.test($('grid').textContent)) $('grid').innerHTML = '<div class="empty">الأنترنت ضعيفة شوية… <a href="" onclick="location.reload();return false">اضغطي هنا باش تعاودي</a></div>'; }, 15000);
 // 3) Stock en direct : petit document sans photos publié par Atelier Stock à chaque changement.
 //    On garde les photos compressées du catalogue léger et on applique quantités / prix / noms à jour.
 const FS = 'https://firestore.googleapis.com/v1/projects/aa-inventaire/databases/(default)/documents/';
